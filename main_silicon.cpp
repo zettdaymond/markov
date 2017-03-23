@@ -29,8 +29,11 @@ int main()
     // Create an api
     auto api = http_api(
 
-    _strategies * get_parameters(_strat_json = std::string()) = [] (auto p)
+    _strategies * get_parameters(_strat_json = std::string()) = [] (auto p, mhd_request* req, mhd_response* res)
     {
+        res->set_header("Access-Control-Allow-Origin", "*");
+        res->set_header("Content-Type", "text/javascript");
+
         std::ostringstream ss;
         ss << p.strat_json;
         std::string outcome_json = doWork(ss.str());
