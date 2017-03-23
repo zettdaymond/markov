@@ -2,27 +2,42 @@
 #include <sstream>
 #include <cmath>
 
+#include <fmt/format.h>
+
 #include "markov.h"
 
 JsonParseResult buildStrategies(rapidjson::Document& doc)
 {
     JsonParseResult res;
-
-    if( not doc.IsArray()) {
+    if( not doc.IsObject()) {
         res.hasError = true;
-        res.error_str = "Root obj in json is not array";
+        res.error_str = "JSON root is not an object";
         return res;
     }
 
-    for(rapidjson::SizeType i = 0; i < doc.Size(); i++) {
+    if(not ( doc.HasMember("steps") && doc["steps"].IsInt()) ) {
+        res.hasError = true;
+        res.error_str = "JSON root have not field 'steps' or field is not an integer";
+        return res;
+    }
+    res.steps = doc["steps"].GetInt();
 
-        if( not doc[i].IsObject()) {
+    if(not ( doc.HasMember("strategies") && doc["strategies"].IsArray()) ) {
+        res.hasError = true;
+        res.error_str = "JSON root have not field 'trategies' or this field is not an array";
+        return res;
+    }
+    auto stratArr = doc["strategies"].GetArray();
+
+    for(rapidjson::SizeType i = 0; i < stratArr.Size(); i++) {
+
+        if( not stratArr[i].IsObject()) {
             res.hasError = true;
             res.error_str = "One of root child is not an object";
             return res;
         }
 
-        const rapidjson::Value& strategyJson = doc[i].GetObject();
+        const rapidjson::Value& strategyJson = stratArr[i].GetObject();
         Strategy strategy;
 
         if (not strategy.fromJson(strategyJson) ) {
@@ -38,11 +53,15 @@ JsonParseResult buildStrategies(rapidjson::Document& doc)
 }
 
 
-std::string runSimulation(std::vector<Strategy>& strategies, int steps)
+std::vector<SimulationStepResult> runSimulation(std::vector<Strategy>& strategies, int steps)
 {
-    if(strategies.size() < 1) {
-        return "";
+    std::vector<SimulationStepResult> result;
+
+    //FIXME: is this check really needs?
+    if(strategies.size() < 1 or steps <= 0) {
+        return result;
     }
+
 
     auto cols = strategies[0].cols;
     auto rows = cols;
@@ -104,32 +123,18 @@ std::string runSimulation(std::vector<Strategy>& strategies, int steps)
             break;
         }
 
+        result.emplace_back(vs, v_strs);
     };
 
-    std::stringstream ss;
-    ss << "On step #" << stage << ":<br><br>";
-    std::string res_text = "On step #%1:<br><br>";
-
-//    for(int i = 0; i < v_strs.size(); ++i) {
-//        res_text.append("<span style=\"color: ");
-//        res_text.append(getColorStr((GraphColor)((int)GraphColor::RED+v_strs[i])));
-//        res_text.append(";\">");
-//        res_text.append(tr("For state \"%1\" optimal strategy is #%2 with revenue of %3").arg(ui->st1_probability->horizontalHeaderItem(i)->text()).arg(v_strs[i]).arg(vs[i]));
-//        res_text.append("</span><br><br>");
-
-//    }
-
-//    ui->result_text->setText(res_text);
-
-//    if(strategies[0].enabled) drawStrategyGraph(ui->st1_view,strategies[0],nodeNames, GraphColor::RED);
-//    if(strategies[1].enabled) drawStrategyGraph(ui->st2_view,strategies[1],nodeNames, GraphColor::GREEN);
-//    if(strategies[2].enabled) drawStrategyGraph(ui->st3_view,strategies[2],nodeNames, GraphColor::BLUE);
-
-    return res_text;
+    return result;
 }
 
 bool Strategy::fromJson(const rapidjson::Value& val)
 {
+    //clear prev
+    probs.clear();
+    revs.clear();
+
     if(not val.HasMember("probabilities")) {
         return false;
     }
@@ -155,6 +160,11 @@ bool Strategy::fromJson(const rapidjson::Value& val)
     if(rows != revsJson.Size()) {
         return false;
     }
+
+    if(not val.HasMember("id")) {
+        return false;
+    }
+    id = val["id"].GetInt();
 
     for(rapidjson::SizeType i = 0; i < probsJson.Size(); i++) {
         if(not probsJson[i].IsArray()) {
@@ -214,4 +224,29 @@ float calculateQ(const Strategy &s, int i)
         q += p*r;
     }
     return q;
+}
+
+rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results)
+{
+    rapidjson::Document doc;
+//    std::stringstream ss;
+//    ss << "On step #" << stage << ":\n";
+//    std::string res_text = ss.str();
+
+//    for(int i = 0; i < v_strs.size(); ++i) {
+//        auto msg = fmt::format("For state \"{0}\" optimal strategy is #{1} with revenue of {2}\n",
+//                               i,
+//                               v_strs[i],
+//                               vs[i]);
+//        res_text.append(msg);
+//    }
+//    std::cout << res_text << std::endl;
+
+    //    ui->result_text->setText(res_text);
+
+    //    if(strategies[0].enabled) drawStrategyGraph(ui->st1_view,strategies[0],nodeNames, GraphColor::RED);
+    //    if(strategies[1].enabled) drawStrategyGraph(ui->st2_view,strategies[1],nodeNames, GraphColor::GREEN);
+    //    if(strategies[2].enabled) drawStrategyGraph(ui->st3_view,strategies[2],nodeNames, GraphColor::BLUE);
+
+    return rapidjson::Document();
 }

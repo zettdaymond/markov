@@ -25,12 +25,14 @@ struct Strategy
 
     bool fromJson(const rapidjson::Value& val);
 
+public:
     std::vector<float> probs;
     std::vector<float> revs;
 
     int rows = 0;
     int cols = 0;
-    bool enabled = false;
+    bool enabled = true;
+    int id = -1;
 };
 
 
@@ -40,12 +42,26 @@ struct JsonParseResult
     std::string error_str;
 
     std::vector<Strategy> strategies;
-    int step = -1;
+    int steps = -1;
+};
+
+
+struct SimulationStepResult
+{
+    SimulationStepResult() = default;
+    SimulationStepResult(std::vector<float> _vs,std::vector<int> _v_strs) : vs(_vs), v_strs(_v_strs) {}
+
+    std::vector<float> vs;
+    std::vector<int>  v_strs;
 };
 
 
 JsonParseResult buildStrategies(rapidjson::Document& doc);
 
-std::string runSimulation(std::vector<Strategy>& strategies, int steps);
+std::vector<SimulationStepResult> runSimulation(std::vector<Strategy>& strategies, int steps);
+
+rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results);
+
+
 
 float calculateQ(const Strategy &s, int i);

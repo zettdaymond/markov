@@ -39,11 +39,13 @@ int main(int argc, char *argv[])
     }
 
     //Run simulation;
-    auto jsonSimResult = runSimulation(jsonParseResult.strategies, jsonParseResult.step);
+    auto simResult = runSimulation(jsonParseResult.strategies, jsonParseResult.steps);
+    //Build output json based on result
+    auto jsonSimResult = formJsonResult(simResult);
 
 
     //print json;
-    std::cout << jsonSimResult << std::endl;
+    //std::cout << jsonSimResult << std::endl;
 
     return 0;
 }
