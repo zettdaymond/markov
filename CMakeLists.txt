@@ -20,6 +20,7 @@ else()
     set(markov_SRC ${markov_SRC} main.cpp)
 endif()
 
+add_definitions(-DRAPIDJSON_HAS_STDSTRING=1)
 
 add_executable(${PROJECT_NAME} ${markov_SRC})
 

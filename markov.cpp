@@ -291,9 +291,8 @@ rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results, s
     for(auto& s : strategies) {
         auto svg = renderSceneGraph(s);
 
-        //FIXME: is that the  proper way to send std::string?
         rapidjson::Value svgJV;
-        svgJV.SetString( rapidjson::StringRef(svg.c_str(), svg.size()) );
+        svgJV.SetString(svg, doc.GetAllocator());
         svgDataJV.PushBack(svgJV, doc.GetAllocator());
     }
 
