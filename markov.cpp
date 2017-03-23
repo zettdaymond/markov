@@ -5,6 +5,7 @@
 #include <fmt/format.h>
 
 #include "markov.h"
+#include "utils.h"
 
 JsonParseResult buildStrategies(rapidjson::Document& doc)
 {
@@ -151,6 +152,17 @@ bool Strategy::fromJson(const rapidjson::Value& val)
         return false;
     }
 
+    if(not val["state_names"].IsArray()) {
+        return false;
+    }
+    auto stateNames = val["state_names"].GetArray();
+    for(int i = 0; i < stateNames.Size(); i++) {
+        if( not stateNames[i].IsString() ) {
+            return false;
+        }
+        state_names.push_back(stateNames[i].GetString());
+    }
+
     auto probsJson = val["probabilities"].GetArray();
     auto revsJson = val["revenues"].GetArray();
 
@@ -226,7 +238,7 @@ float calculateQ(const Strategy &s, int i)
     return q;
 }
 
-rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results)
+rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results, std::vector<Strategy>& strategies)
 {
     //TODO: use strategy id, instead of position in array
     rapidjson::Document doc;
@@ -272,10 +284,65 @@ rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results)
     doc.AddMember("steps", stepsJV.Move(), doc.GetAllocator());
 
     //Create SVG-DATA
+    rapidjson::Value svgDataJV;
+    svgDataJV.SetArray();
 
-    //    if(strategies[0].enabled) drawStrategyGraph(ui->st1_view,strategies[0],nodeNames, GraphColor::RED);
-    //    if(strategies[1].enabled) drawStrategyGraph(ui->st2_view,strategies[1],nodeNames, GraphColor::GREEN);
-    //    if(strategies[2].enabled) drawStrategyGraph(ui->st3_view,strategies[2],nodeNames, GraphColor::BLUE);
+    for(auto& s : strategies) {
+        auto svg = renderSceneGraph(s);
+
+        //FIXME: is that the  proper way to send std::string?
+        rapidjson::Value svgJV;
+        svgJV.SetString( rapidjson::StringRef(svg.c_str(), svg.size()) );
+        svgDataJV.PushBack(svgJV, doc.GetAllocator());
+    }
+
+    doc.AddMember("svg_data", svgDataJV.Move(), doc.GetAllocator());
 
     return doc;
+}
+
+std::string renderSceneGraph(const Strategy& strat)
+{
+    std::stringstream scriptStream;
+    scriptStream << "digraph G {  nodesep=1.25 ranksep=1.25\n";
+    //TODO: Random color?
+    //scriptStream << "node [shape=ellipse, width=0.75, height=0.75, color=\"" << c.name() << "\"]\n";
+    //scriptStream << "edge [color=\"" << c.name() << "\"]\n";
+
+    int states = strat.state_names.size();
+    auto s = strat;
+
+    for(int i = 0; i < states; i++) {
+        for(int j = 0; j < states; j++) {
+            auto probability = s.probs[i * states + j];
+            if(probability == 0) {
+                continue;
+            }
+            auto revenue = s.revs[i * states + j];
+
+            auto fromStr = s.state_names[i];
+            auto toStr = s.state_names[j];
+
+            writeNode(scriptStream,fromStr, toStr, fmt::format("{0}\n {1}$", probability,revenue));
+        }
+    }
+
+    scriptStream << '}';
+    scriptStream.flush();
+
+    std::string graphDescription = scriptStream.str();
+
+    std::cout << graphDescription << std::endl;
+
+    auto svgData = utils::renderToGraph(graphDescription);
+
+    return svgData;
+}
+
+
+void writeNode(std::stringstream& out, const std::string& from,
+               const std::string& to, const std::string& arcName)
+{
+    out << '\"' << from << "\" -> \"" << to
+        << "\" [label = \"" << arcName << "\"]\n";
 }

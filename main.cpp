@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     //Run simulation;
     auto simResult = runSimulation(jsonParseResult.strategies, jsonParseResult.steps);
     //Build output json based on result
-    auto jsonSimResult = formJsonResult(simResult);
+    auto jsonSimResult = formJsonResult(simResult, jsonParseResult.strategies);
 
 
     //print json;

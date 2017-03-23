@@ -28,6 +28,7 @@ struct Strategy
 public:
     std::vector<float> probs;
     std::vector<float> revs;
+    std::vector<std::string> state_names;
 
     int rows = 0;
     int cols = 0;
@@ -60,8 +61,12 @@ JsonParseResult buildStrategies(rapidjson::Document& doc);
 
 std::vector<SimulationStepResult> runSimulation(std::vector<Strategy>& strategies, int steps);
 
-rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results);
+rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results,
+                                   std::vector<Strategy>& strategies);
 
-
+std::string renderSceneGraph(const Strategy& strat);
 
 float calculateQ(const Strategy &s, int i);
+
+void writeNode(std::stringstream& out, const std::string& from,
+               const std::string& to, const std::string& arcName);
