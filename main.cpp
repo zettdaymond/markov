@@ -17,45 +17,9 @@ int main(int argc, char *argv[])
     std::string income_json( (std::istreambuf_iterator<char>(ifs) ),
                              (std::istreambuf_iterator<char>()    ) );
 
+    std::string outcome_json = doWork(income_json);
 
-    std::string outcome_json = "";
-
-    //Parse incoming json
-    rapidjson::Document document;
-
-    if (document.Parse(income_json.c_str()).HasParseError()) {
-        auto err = document.GetParseError();
-        auto offset = document.GetErrorOffset();
-
-        //TODO: write outcome_json;
-        return -1;
-    }
-
-    //Convert json to vector of strategies
-    auto jsonParseResult = buildStrategies(document);
-    if(jsonParseResult.hasError) {
-        //TODO: write outcome_json with error;
-        std::cout << "Error in jsonParseResult\n";
-        return -1;
-    }
-
-    //Run simulation;
-    auto simResult = runSimulation(jsonParseResult.strategies, jsonParseResult.steps);
-    //Build output json based on result
-    auto jsonSimResult = formJsonResult(simResult, jsonParseResult.strategies);
-
-
-    //print json;
-    rapidjson::StringBuffer buffer;
-
-    buffer.Clear();
-
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    jsonSimResult.Accept(writer);
-
-    auto jsonString =  std::string( buffer.GetString() );
-
-    std::cout << jsonString  << std::endl;
+    std::cout << outcome_json  << std::endl;
 
     return 0;
 }

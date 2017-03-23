@@ -1,6 +1,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>
 #include <fstream>
+#include <typeinfo>
 
 #include <silicon/api.hh>
 #include <silicon/backends/mhd.hh>
@@ -28,10 +29,12 @@ int main()
     // Create an api
     auto api = http_api(
 
-    _strategies * get_parameters(_strat_json) = [] (auto p)
+    _strategies * get_parameters(_strat_json = std::string()) = [] (auto p)
     {
-
-        return "Hello, worls";
+        std::ostringstream ss;
+        ss << p.strat_json;
+        std::string outcome_json = doWork(ss.str());
+        return outcome_json;
     }
 
     );

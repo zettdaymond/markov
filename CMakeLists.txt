@@ -4,7 +4,7 @@ project(markov)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
-option(BUILD_AS_MICROSERVICE "Build program as http standalone server." OFF)
+option(BUILD_AS_MICROSERVICE "Build program as http standalone server." ON)
 
 find_package(RapidJSON REQUIRED)
 find_package(fmt REQUIRED)
