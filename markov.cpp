@@ -228,25 +228,54 @@ float calculateQ(const Strategy &s, int i)
 
 rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results)
 {
+    //TODO: use strategy id, instead of position in array
     rapidjson::Document doc;
-//    std::stringstream ss;
-//    ss << "On step #" << stage << ":\n";
-//    std::string res_text = ss.str();
+    doc.SetObject();
 
-//    for(int i = 0; i < v_strs.size(); ++i) {
-//        auto msg = fmt::format("For state \"{0}\" optimal strategy is #{1} with revenue of {2}\n",
-//                               i,
-//                               v_strs[i],
-//                               vs[i]);
-//        res_text.append(msg);
-//    }
-//    std::cout << res_text << std::endl;
+    //Create states for each step
+    rapidjson::Value stepsJV;
+    stepsJV.SetArray();
 
-    //    ui->result_text->setText(res_text);
+    for(int step = 0; step < results.size(); step++) {
+        const SimulationStepResult& stepRes = results[step];
+
+        rapidjson::Value stepJV;
+        stepJV.SetObject();
+
+        rapidjson::Value stepNumJV(step);
+        stepJV.AddMember("step_num", stepNumJV.Move(), doc.GetAllocator());
+
+        rapidjson::Value statesJV;
+        statesJV.SetArray();
+
+        for(int state = 0; state < stepRes.v_strs.size(); state++) {
+            rapidjson::Value stateNumJV(state);
+            rapidjson::Value optimalStratJV(stepRes.v_strs[state]);
+            rapidjson::Value revenueJV(stepRes.vs[state]);
+
+            rapidjson::Value stateObjJV;
+            stateObjJV.SetObject();
+
+            stateObjJV.AddMember("state_num", stateNumJV, doc.GetAllocator());
+            stateObjJV.AddMember("optimal_strategy", optimalStratJV.Move(), doc.GetAllocator());;
+            stateObjJV.AddMember("optimal_strategy_revenue", revenueJV.Move(), doc.GetAllocator());
+
+            statesJV.PushBack(stateObjJV.Move(), doc.GetAllocator());
+        }
+
+        stepJV.AddMember("states", statesJV.Move(), doc.GetAllocator());
+
+        stepsJV.PushBack(stepJV, doc.GetAllocator());
+    }
+
+
+    doc.AddMember("steps", stepsJV.Move(), doc.GetAllocator());
+
+    //Create SVG-DATA
 
     //    if(strategies[0].enabled) drawStrategyGraph(ui->st1_view,strategies[0],nodeNames, GraphColor::RED);
     //    if(strategies[1].enabled) drawStrategyGraph(ui->st2_view,strategies[1],nodeNames, GraphColor::GREEN);
     //    if(strategies[2].enabled) drawStrategyGraph(ui->st3_view,strategies[2],nodeNames, GraphColor::BLUE);
 
-    return rapidjson::Document();
+    return doc;
 }

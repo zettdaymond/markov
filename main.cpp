@@ -1,4 +1,5 @@
 #include <rapidjson/document.h>
+#include <rapidjson/writer.h>
 #include <fstream>
 
 #include "markov.h"
@@ -45,7 +46,16 @@ int main(int argc, char *argv[])
 
 
     //print json;
-    //std::cout << jsonSimResult << std::endl;
+    rapidjson::StringBuffer buffer;
+
+    buffer.Clear();
+
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    jsonSimResult.Accept(writer);
+
+    auto jsonString =  std::string( buffer.GetString() );
+
+    std::cout << jsonString  << std::endl;
 
     return 0;
 }
