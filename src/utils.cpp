@@ -15,7 +15,8 @@ std::string renderToGraph(const std::string& graphDesc)
     Agraph_t* G = agmemread(graphDesc.c_str());
 
     if (G == nullptr) {
-        std::cerr << "Could not create graph from generated string." << std::endl;
+        //FIXME: Rewrite to Result monad
+        //std::cerr << "Could not create graph from generated string." << std::endl;
     }
     gvLayout (gvc, G, "dot");
 

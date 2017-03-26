@@ -8,54 +8,50 @@
 #include "markov.h"
 #include "utils.h"
 
+
 JsonParseResult buildStrategies(rapidjson::Document& doc)
 {
-    JsonParseResult res;
+    int steps = 0;
+    std::vector<Strategy> strategies;
+
     if( not doc.IsObject()) {
-        res.hasError = true;
-        res.error_str = "JSON root is not an object";
-        return res;
+        return Err<EvalError>( {10,"JSON root is not an object"} );
     }
 
     if(not ( doc.HasMember("steps") && doc["steps"].IsInt()) ) {
-        res.hasError = true;
-        res.error_str = "JSON root have not field 'steps' or field is not an integer";
-        return res;
+        return Err<EvalError>( {11,"JSON root have not field 'steps' or field is not an integer"} );
     }
-    res.steps = doc["steps"].GetInt();
+
+    steps = doc["steps"].GetInt();
 
     if(not ( doc.HasMember("strategies") && doc["strategies"].IsArray()) ) {
-        res.hasError = true;
-        res.error_str = "JSON root have not field 'trategies' or this field is not an array";
-        return res;
+        return Err<EvalError>( {12,"JSON root have not field 'trategies' or this field is not an array"} );
     }
+
     auto stratArr = doc["strategies"].GetArray();
 
     for(rapidjson::SizeType i = 0; i < stratArr.Size(); i++) {
 
         if( not stratArr[i].IsObject()) {
-            res.hasError = true;
-            res.error_str = "One of root child is not an object";
-            return res;
+            return Err<EvalError>( {13,"One of root child is not an object"} );
         }
 
         const rapidjson::Value& strategyJson = stratArr[i].GetObject();
-        Strategy strategy;
 
-        if (not strategy.fromJson(strategyJson) ) {
-            res.hasError = true;
-            res.error_str = "Could not load one of the strategies";
-            return res;
+        auto strategyRes = strategyFromJson(strategyJson);
+        if(strategyRes.is_err()) {
+            return Err<EvalError>( std::move( strategyRes.err() ));
         }
 
-        res.strategies.push_back(std::move(strategy));
+        strategies.push_back(std::move(strategyRes.value()));
     }
 
-    return res;
+    return Ok<JsonParse>( {std::move(strategies), steps} );
 }
 
 
-std::vector<SimulationStepResult> runSimulation(std::vector<Strategy>& strategies, int steps)
+
+SimulationResult runSimulation(std::vector<Strategy>& strategies, int steps)
 {
     std::vector<SimulationStepResult> result;
 
@@ -68,7 +64,7 @@ std::vector<SimulationStepResult> runSimulation(std::vector<Strategy>& strategie
     auto cols = strategies[0].cols;
     auto rows = cols;
 
-    std::cout << "Running sim with" << steps << "stages..." << std::endl;
+    DEBUG("Running sim with {} stages...\n",steps);
 
     std::vector<float> vs(cols);
     std::fill(vs.begin(), vs.end(), 0.0f);
@@ -97,14 +93,14 @@ std::vector<SimulationStepResult> runSimulation(std::vector<Strategy>& strategie
                 auto q = calculateQ(curr_strat, i);
                 float sum = q;
 
-                //qDebug() << "qik =" << q;
+                //DEBUG("qik = {}\n",q);
 
                 for(int j = 0; j < cols; ++j) {
 
                     auto pr = prob[i*cols+j];
                     //auto recv = working_vs[j];
                     //qDebug() << "prob=" << pr << " * recv=" << recv;
-
+                    //DEBUG("probs = {} * recv = {}\n",pr,recv);
 
                     sum += pr  * working_vs[j];
                 }
@@ -113,116 +109,127 @@ std::vector<SimulationStepResult> runSimulation(std::vector<Strategy>& strategie
                     vs[i] = sum;
                     v_strs[i] = strat;
                 }
-                std::cout << "in strategy" << strat << "for column" << i << "selected" << sum << "(" << v_strs[i] << ")" << std::endl;
-
+                //std::cout << "in strategy" << strat << "for column" << i << "selected" << sum << "(" << v_strs[i] << ")" << std::endl;
+                DEBUG("In starategy {} for column {} selected {} ({})\n", strat, i, sum, v_strs[i]);
             }
         }
 
         //std::cout << "stage #" << stage << "vs:" << vs << "choices:" << v_strs << std::endl;
+        //DEBUG("Stage {} vs: {} choises: {}", stage, vs, v_strs);
+
         ++stage;
         if (prev_v_strs == v_strs && stage > 2) {
             std::cout << "more stages not needed" << std::endl;
             break;
         }
 
+        //FIXME: is it possible to move?
         result.emplace_back(vs, v_strs);
     };
 
     return result;
 }
 
-bool Strategy::fromJson(const rapidjson::Value& val)
+
+
+StratResult strategyFromJson(const rapidjson::Value& val)
 {
-    //clear prev
-    probs.clear();
-    revs.clear();
+    Strategy s;
 
     if(not val.HasMember("probabilities")) {
-        return false;
+        return Err<EvalError>({100, "One of strategies does not have a field 'probabilities'"});
     }
 
     if(not val.HasMember("revenues")) {
-        return false;
+        return Err<EvalError>({101, "One of strategies does not have a field 'revenues'"});
+    }
+
+    if(not val.HasMember("state_names")) {
+        return Err<EvalError>({102, "One of strategies does not have a field 'state_names'"});
     }
 
     if(not val["probabilities"].IsArray()) {
-        return false;
+        return Err<EvalError>({103, "In one of strategies field 'probabilities' is not an array"});
     }
 
     if(not val["revenues"].IsArray()) {
-        return false;
+        return Err<EvalError>({104, "In one of strategies field 'revenues' is not an array"});
     }
 
     if(not val["state_names"].IsArray()) {
-        return false;
+        return Err<EvalError>({105, "In one of strategies field 'state_names' is not an array"});
     }
+
+
     auto stateNames = val["state_names"].GetArray();
+
     for(int i = 0; i < stateNames.Size(); i++) {
         if( not stateNames[i].IsString() ) {
-            return false;
+            return Err<EvalError>({106, "In one of strategies state name in 'state_names' is not a string"});
         }
-        state_names.push_back(stateNames[i].GetString());
+
+        s.state_names.push_back(stateNames[i].GetString());
     }
 
     auto probsJson = val["probabilities"].GetArray();
     auto revsJson = val["revenues"].GetArray();
 
-    rows = probsJson.Size();
-    cols = rows;
+    s.rows = probsJson.Size();
+    s.cols = s.rows;
 
-    if(rows != revsJson.Size()) {
-        return false;
+    if(s.rows != revsJson.Size()) {
+        return Err<EvalError>({107, "In one of strategies array 'probabilities' and array 'revenues' has diffrent sizes"});
     }
 
-    if(not val.HasMember("id")) {
-        return false;
-    }
-    id = val["id"].GetInt();
+    //if(not val.HasMember("id")) {
+    //    return Err<EvalError>({101, "One of strategies does not have a field 'id'"});
+    //}
+    //TODO: check that id is int
+    //id = val["id"].GetInt();
 
     for(rapidjson::SizeType i = 0; i < probsJson.Size(); i++) {
         if(not probsJson[i].IsArray()) {
-            return false;
+            return Err<EvalError>({108, "In one of strategies 'probabilities' has row that is not an array"});
         }
 
         const auto probRowJson = probsJson[i].GetArray();
-        if(rows != probRowJson.Size()) {
-            return false;
+        if(s.rows != probRowJson.Size()) {
+            return Err<EvalError>({109, "In one of strategies 'probabilities' has row with diffrent size than 'probabilities' array itself"});
         }
 
         for(rapidjson::SizeType j = 0; j < probRowJson.Size(); j++) {
             if(not probRowJson[j].IsNumber()) {
-                return false;
+                return Err<EvalError>({110, "In one of strategies 'probabilities' has row with non-number item"});
             }
 
             auto probValue = probRowJson[j].GetDouble();
-            probs.push_back(probValue);
+            s.probs.push_back(probValue);
         }
     }
 
     for(rapidjson::SizeType i = 0; i < revsJson.Size(); i++) {
         if(not revsJson[i].IsArray()) {
-            return false;
+            return Err<EvalError>({111, "In one of strategies 'revenues' has row that is not an array"});
         }
 
         const auto revRowJson = revsJson[i].GetArray();
-        if(rows != revRowJson.Size()) {
-            return false;
+        if(s.rows != revRowJson.Size()) {
+            return Err<EvalError>({112, "In one of strategies 'revenues' has row with diffrent size than 'revenues' array itself"});
         }
 
         for(rapidjson::SizeType j = 0; j < revRowJson.Size(); j++) {
             if(not revRowJson[j].IsNumber()) {
-                return false;
+                return Err<EvalError>({113, "In one of strategies 'revenues' has row with non-number item"});
             }
 
             auto revValue = revRowJson[j].GetDouble();
-            revs.push_back(revValue);
+            s.revs.push_back(revValue);
         }
     }
 
-    enabled = true;
-
-    return true;
+    return Ok<Strategy>(std::move(s));
 }
+
 
 
 float calculateQ(const Strategy &s, int i)
@@ -238,6 +245,8 @@ float calculateQ(const Strategy &s, int i)
     }
     return q;
 }
+
+
 
 rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results, std::vector<Strategy>& strategies)
 {
@@ -301,6 +310,8 @@ rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results, s
     return doc;
 }
 
+
+
 std::string renderSceneGraph(const Strategy& strat)
 {
     std::stringstream scriptStream;
@@ -332,12 +343,13 @@ std::string renderSceneGraph(const Strategy& strat)
 
     std::string graphDescription = scriptStream.str();
 
-    std::cout << graphDescription << std::endl;
+    DEBUG("{}\n", graphDescription);
 
     auto svgData = utils::renderToGraph(graphDescription);
 
     return svgData;
 }
+
 
 
 void writeNode(std::stringstream& out, const std::string& from,

@@ -13,7 +13,10 @@ find_package(GraphViz REQUIRED)
 set(markov_SRC
     src/markov.cpp
     src/utils.cpp
+    src/Result.hpp
+    src/types.hpp
     src/lib_entry_point.cpp
+
 )
 
 if(BUILD_AS_MICROSERVICE)
@@ -24,7 +27,7 @@ else()
     set(markov_SRC ${markov_SRC} src/main_app.cpp)
 endif()
 
-add_definitions(-DRAPIDJSON_HAS_STDSTRING=1)
+add_definitions(-DRAPIDJSON_HAS_STDSTRING=1 -std=c++17)
 
 add_executable(${PROJECT_NAME} ${markov_SRC})
 

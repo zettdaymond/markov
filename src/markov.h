@@ -7,31 +7,11 @@
 
 #include <rapidjson/document.h>
 
+#include "types.hpp"
 
-struct Strategy
+
+struct JsonParse
 {
-    Strategy() = default;
-    Strategy(int _rows, int _cols);
-
-    bool fromJson(const rapidjson::Value& val);
-
-public:
-    std::vector<float> probs;
-    std::vector<float> revs;
-    std::vector<std::string> state_names;
-
-    int rows = 0;
-    int cols = 0;
-    bool enabled = true;
-    int id = -1;
-};
-
-
-struct JsonParseResult
-{
-    bool hasError = false;
-    std::string error_str;
-
     std::vector<Strategy> strategies;
     int steps = -1;
 };
@@ -40,23 +20,36 @@ struct JsonParseResult
 struct SimulationStepResult
 {
     SimulationStepResult() = default;
-    SimulationStepResult(std::vector<float> _vs,std::vector<int> _v_strs) : vs(_vs), v_strs(_v_strs) {}
+    SimulationStepResult(const std::vector<float>& _vs, const std::vector<int> & _v_strs) : vs(_vs), v_strs(_v_strs) {}
 
     std::vector<float> vs;
     std::vector<int>  v_strs;
 };
 
 
+using StratResult = Result<Strategy, EvalError>;
+using SimulationResult = std::vector<SimulationStepResult>;
+using JsonParseResult = Result<JsonParse, EvalError>;
+
+
 JsonParseResult buildStrategies(rapidjson::Document& doc);
 
-std::vector<SimulationStepResult> runSimulation(std::vector<Strategy>& strategies, int steps);
+
+SimulationResult runSimulation(std::vector<Strategy>& strategies, int steps);
+
 
 rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results,
                                    std::vector<Strategy>& strategies);
 
+
+StratResult strategyFromJson(const rapidjson::Value& val);
+
+
 std::string renderSceneGraph(const Strategy& strat);
 
+
 float calculateQ(const Strategy &s, int i);
+
 
 void writeNode(std::stringstream& out, const std::string& from,
                const std::string& to, const std::string& arcName);
