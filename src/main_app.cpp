@@ -12,7 +12,12 @@ int main(int argc, char *argv[])
     }
 
     const auto pathToJson = argv[1];
+
     std::ifstream ifs(pathToJson);
+    if(not ifs.is_open()) {
+        std::cout << "Could not open file.\nprogram /path/to/file.json" << std::endl;
+        return -1;
+    }
     std::string income_json( (std::istreambuf_iterator<char>(ifs) ),
                              (std::istreambuf_iterator<char>()    ) );
 
