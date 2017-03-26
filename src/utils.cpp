@@ -8,6 +8,7 @@
 
 namespace utils {
 
+#ifdef ALLOW_GRAPHVIZ_RENDERING
 std::string renderToGraph(const std::string& graphDesc)
 {
     GVC_t* gvc = gvContext();
@@ -33,6 +34,14 @@ std::string renderToGraph(const std::string& graphDesc)
     return std::string(result, length);
 }
 
+#else
+
+std::string renderToGraph(const std::string& graphDesc)
+{
+    return "";
+}
+
+#endif
 
 std::string jsonToString(rapidjson::Document& doc)
 {

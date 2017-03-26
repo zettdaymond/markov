@@ -8,7 +8,7 @@ option(BUILD_AS_MICROSERVICE "Build program as http standalone server." OFF)
 
 find_package(RapidJSON REQUIRED)
 find_package(fmt REQUIRED)
-find_package(GraphViz REQUIRED)
+find_package(GraphViz)
 
 set(markov_SRC
     src/markov.cpp
@@ -16,8 +16,12 @@ set(markov_SRC
     src/Result.hpp
     src/types.hpp
     src/lib_entry_point.cpp
-
 )
+
+if(GRAPHVIZ_FOUND)
+    message("Building with graphviz")
+    add_definitions(-DALLOW_GRAPHVIZ_RENDERING=1)
+endif()
 
 if(BUILD_AS_MICROSERVICE)
     find_package(PkgConfig REQUIRED)
@@ -27,12 +31,12 @@ else()
     set(markov_SRC ${markov_SRC} src/main_app.cpp)
 endif()
 
-add_definitions(-DRAPIDJSON_HAS_STDSTRING=1 -std=c++1z)
+add_definitions(-DRAPIDJSON_HAS_STDSTRING=1 -DFMT_HEADER_ONLY=1 -std=c++1z)
 
 add_executable(${PROJECT_NAME} ${markov_SRC})
 
 target_link_libraries(${PROJECT_NAME} libfmt.a ${GRAPHVIZ_LIBRARIES})
 
 if(BUILD_AS_MICROSERVICE)
-    target_link_libraries(${PROJECT_NAME} libfmt.a ${GRAPHVIZ_LIBRARIES} ${LIBMICROHTTPD_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} ${GRAPHVIZ_LIBRARIES} ${LIBMICROHTTPD_LIBRARIES})
 endif()

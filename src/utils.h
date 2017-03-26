@@ -5,7 +5,7 @@
 #include <fmt/format.h>
 #include <rapidjson/document.h>
 
-//#define ENABLE_DEBUG_OUTPUT
+#define ENABLE_DEBUG_OUTPUT
 
 #ifdef ENABLE_DEBUG_OUTPUT
 #define DEBUG(message, args...) \
