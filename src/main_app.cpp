@@ -1,8 +1,7 @@
-#include <rapidjson/document.h>
-#include <rapidjson/writer.h>
 #include <fstream>
+#include <iostream>
 
-#include "markov.h"
+#include "lib_entry_point.h"
 
 
 int main(int argc, char *argv[])
@@ -17,7 +16,7 @@ int main(int argc, char *argv[])
     std::string income_json( (std::istreambuf_iterator<char>(ifs) ),
                              (std::istreambuf_iterator<char>()    ) );
 
-    std::string outcome_json = doWork(income_json);
+    std::string outcome_json = analyse(income_json);
 
     std::cout << outcome_json  << std::endl;
 

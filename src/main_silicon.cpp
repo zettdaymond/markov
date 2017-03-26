@@ -1,5 +1,3 @@
-#include <rapidjson/document.h>
-#include <rapidjson/writer.h>
 #include <fstream>
 #include <typeinfo>
 
@@ -16,6 +14,10 @@
 #define IOD_SYMBOL_name
     iod_define_symbol(strat_json)
 #endif
+
+
+#include <rapidjson/document.h>
+#include <rapidjson/writer.h>
 
 #include "markov.h"
 

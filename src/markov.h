@@ -8,16 +8,6 @@
 #include <rapidjson/document.h>
 
 
-enum GraphColor
-{
-    BLACK,
-    RED,
-    GREEN,
-    BLUE,
-    COUNT
-};
-
-
 struct Strategy
 {
     Strategy() = default;
@@ -70,5 +60,3 @@ float calculateQ(const Strategy &s, int i);
 
 void writeNode(std::stringstream& out, const std::string& from,
                const std::string& to, const std::string& arcName);
-
-std::string doWork(const std::__cxx11::string& incomeJson);
