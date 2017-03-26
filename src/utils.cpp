@@ -4,7 +4,7 @@
 
 #include <graphviz/gvc.h>
 
-#include <rapidjson/writer.h>
+#include <thirdparty/rapidjson/writer.h>
 
 namespace utils {
 

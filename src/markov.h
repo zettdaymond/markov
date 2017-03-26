@@ -5,7 +5,7 @@
 #include <string>
 #include <unordered_map>
 
-#include <rapidjson/document.h>
+#include <thirdparty/rapidjson/document.h>
 
 #include "types.hpp"
 

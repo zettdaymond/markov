@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include <fmt/format.h>
-#include <rapidjson/document.h>
+#include <thirdparty/fmt/format.h>
+#include <thirdparty/rapidjson/document.h>
 
 #define ENABLE_DEBUG_OUTPUT
 

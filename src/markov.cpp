@@ -2,8 +2,8 @@
 #include <sstream>
 #include <cmath>
 
-#include <rapidjson/writer.h>
-#include <fmt/format.h>
+#include <thirdparty/rapidjson/writer.h>
+#include <thirdparty/fmt/format.h>
 
 #include "markov.h"
 #include "utils.h"
