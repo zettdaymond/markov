@@ -2,13 +2,17 @@
 
 #include <iostream>
 
-#include <graphviz/gvc.h>
-
 #include <thirdparty/rapidjson/writer.h>
+
+#if defined(GRAPHVIZ_DYNAMIC_RENDERING) || defined(GRAPHVIZ_STATIC_RENDERING)
+#include <graphviz/gvc.h>
+#else
+#include "thirdparty/tiny-process-library/process.hpp"
+#endif
 
 namespace utils {
 
-#ifdef ALLOW_GRAPHVIZ_RENDERING
+#if defined(GRAPHVIZ_DYNAMIC_RENDERING)
 std::string renderToGraph(const std::string& graphDesc)
 {
     GVC_t* gvc = gvContext();
@@ -34,11 +38,24 @@ std::string renderToGraph(const std::string& graphDesc)
     return std::string(result, length);
 }
 
+#elif defined(GRAPHVIZ_STATIC_RENDERING)
+
 #else
 
 std::string renderToGraph(const std::string& graphDesc)
 {
-    return "";
+    std::string result;
+    Process dot("dot -Tsvg", "", [&](const char *bytes, size_t n) {
+        result = std::move( std::string(bytes, n));
+    },
+    nullptr, true);
+
+    dot.write(graphDesc);
+    dot.close_stdin();
+
+    auto errCode = dot.get_exit_status();
+
+    return result;
 }
 
 #endif

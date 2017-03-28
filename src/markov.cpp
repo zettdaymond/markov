@@ -293,11 +293,11 @@ rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results, s
 
     doc.AddMember("steps", stepsJV.Move(), doc.GetAllocator());
 
-#ifdef ALLOW_GRAPHVIZ_RENDERING
     //Create SVG-DATA
     rapidjson::Value svgDataJV;
     svgDataJV.SetArray();
 
+    //TODO: Candidate for threads
     for(auto& s : strategies) {
         auto svg = renderSceneGraph(s);
 
@@ -307,8 +307,6 @@ rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results, s
     }
 
     doc.AddMember("svg_data", svgDataJV.Move(), doc.GetAllocator());
-
-#endif
 
     return doc;
 }
