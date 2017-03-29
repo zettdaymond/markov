@@ -361,6 +361,7 @@ std::string renderSceneGraph(const Strategy& strat)
 {
     std::stringstream scriptStream;
     scriptStream << "digraph G {  nodesep=1.25 ranksep=1.25\n";
+    scriptStream << "node [shape=ellipse, width=0.75, height=0.75]\n";
     //TODO: Random color?
     //scriptStream << "node [shape=ellipse, width=0.75, height=0.75, color=\"" << c.name() << "\"]\n";
     //scriptStream << "edge [color=\"" << c.name() << "\"]\n";
