@@ -51,12 +51,14 @@ std::string renderToGraph(const std::string& graphDesc)
 
 #else
 
+//std::mutex mtx;
+
 std::string renderToGraph(const std::string& graphDesc)
 {
     //TODO: add wait_until parameter in the constructor
     std::string result;
     Process dot("dot -Tsvg", "", [&](const char *bytes, size_t n) {
-        result = std::move( std::string(bytes, n));
+        result.append( bytes, n );
     },
     nullptr, true);
 

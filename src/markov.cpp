@@ -3,12 +3,15 @@
 #include <cmath>
 #include <thread>
 #include <mutex>
+#include <chrono>
 
 #include <thirdparty/rapidjson/writer.h>
 #include <thirdparty/fmt/format.h>
 
 #include "markov.h"
 #include "utils.h"
+
+namespace ch = std::chrono;
 
 
 JsonParseResult buildStrategies(rapidjson::Document& doc)
@@ -35,7 +38,7 @@ JsonParseResult buildStrategies(rapidjson::Document& doc)
     for(rapidjson::SizeType i = 0; i < stratArr.Size(); i++) {
 
         if( not stratArr[i].IsObject()) {
-            return Err<EvalError>( {13,"One of root child is not an object"} );
+            return Err<EvalError>( {13,"One of 'strategies' array element is not an object"} );
         }
 
         const rapidjson::Value& strategyJson = stratArr[i].GetObject();
@@ -305,11 +308,16 @@ rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results, s
 
     auto& docAllocator = doc.GetAllocator();
 
+    auto t1 = ch::high_resolution_clock::now();
+
 #ifdef MULTITHREADED_RENDERING
     for(int i = 0; i < strategies.size(); i++) {
         const auto& s = strategies[i];
         threads.push_back(std::thread([&s, &docAllocator, &mtx, &svgDataJV]{
             auto svg = renderSceneGraph(s);
+
+            DEBUG("\nRendering seccessful.\n");
+            DEBUG("\nSVG Data:\n{}\n",svg);
 
             rapidjson::Value svgJV;
             svgJV.SetString(svg, docAllocator );
@@ -328,13 +336,19 @@ rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results, s
     for(const auto& s : strategies) {
         auto svg = renderSceneGraph(s);
 
-        rapidjson::Value svgJV;
-        svgJV.SetString(svg, docAllocator );
+        DEBUG("\nRendering seccessful.\n");
+        DEBUG("\nSVG Data:\n {}\n",svg);
 
-        svgDataJV.PushBack(svgJV, docAllocator );
+        rapidjson::Value svgJV;
+        svgJV.SetString(svg,  doc.GetAllocator() );
+
+        svgDataJV.PushBack(svgJV,  doc.GetAllocator() );
     }
 
 #endif
+
+    auto t2 = ch::high_resolution_clock::now();
+    DEBUG("\nRendering time : {}ms\n", ch::duration_cast<ch::milliseconds>(t2-t1).count());
 
     doc.AddMember("svg_data", svgDataJV.Move(), doc.GetAllocator());
 

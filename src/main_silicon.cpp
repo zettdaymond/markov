@@ -16,14 +16,29 @@
 #endif
 
 
-#include <rapidjson/document.h>
-#include <rapidjson/writer.h>
+#include <thirdparty/rapidjson/document.h>
+#include <thirdparty/rapidjson/writer.h>
+
+#include <thirdparty/fmt/format.h>
+
+#include <thirdparty/cmdline/cmdline.h>
 
 #include "lib_entry_point.h"
 
-
-int main()
+struct Config
 {
+    int port = 9999;
+};
+
+Config conf;
+
+int main(int argc, char *argv[])
+{
+    cmdline::parser a;
+    a.add<int>("port", 'p', "Port number. Default is 9999.", false, 9999, cmdline::range(1, 65535));
+    a.parse_check(argc, argv);
+
+    conf.port = a.get<int>("port");
 
     using namespace sl;
     using namespace s;
@@ -42,6 +57,12 @@ int main()
 
     );
 
-    // Serve it using cppnetlib and the json protocol.
-    mhd_json_serve(api, 9999);
+    fmt::print("Starting server...\n");
+    fmt::print("Start with --help to see help message.\n");
+    fmt::print("Listening on port : {}\n", conf.port);
+
+    // Serve it using libmicrohttpd library and the json protocol.
+    mhd_json_serve(api, conf.port);
+
+    fmt::print("Shutting Down...\n");
 }
