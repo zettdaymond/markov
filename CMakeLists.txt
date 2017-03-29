@@ -16,6 +16,7 @@ option(GRAPHVIZ_LINK_LIBRARY "Using graphviz as the library, or use as a the pro
 option(MULTITHREADED_GRAPH_RENDERING "Using threads when rendering. This option is highly recommended to turn ON,
     if you use graphviz as the process instead as the library for rendering." OFF)
 option(VERBOSE_DEBUG_OUTPUT "Enable verbose debug outputs" OFF)
+option(STATIC_BUILD "Link all possible libraries statically" OFF)
 
 
 set(markov_SRC
@@ -55,9 +56,11 @@ else()
     set(markov_SRC ${markov_SRC} src/main_app.cpp)
 endif()
 
+if(STATIC_BUILD)
+    list(APPEND CMAKE_EXE_LINKER_FLAGS -static)
+endif()
 
 add_definitions(-DRAPIDJSON_HAS_STDSTRING=1 -DFMT_HEADER_ONLY=1 -std=c++14 -static -pthread)
-
 
 add_executable(${PROJECT_NAME} ${markov_SRC})
 target_link_libraries(${PROJECT_NAME} ${markov_LIBS})
@@ -69,4 +72,5 @@ message("# BUILD_AS_MICROSERVICE \t\t${BUILD_AS_MICROSERVICE}")
 message("# GRAPHVIZ_LINK_LIBRARY \t\t${GRAPHVIZ_LINK_LIBRARY}")
 message("# MULTITHREADED_GRAPH_RENDERING \t${MULTITHREADED_GRAPH_RENDERING}")
 message("# VERBOSE_DEBUG_OUTPUT \t\t${VERBOSE_DEBUG_OUTPUT}")
+message("# STATIC_BUILD \t\t\t${STATIC_BUILD}")
 message("# ------------------------------------")
