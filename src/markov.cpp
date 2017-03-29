@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <sstream>
 #include <cmath>
+#include <thread>
+#include <mutex>
 
 #include <thirdparty/rapidjson/writer.h>
 #include <thirdparty/fmt/format.h>
@@ -298,13 +300,41 @@ rapidjson::Document formJsonResult(std::vector<SimulationStepResult>& results, s
     svgDataJV.SetArray();
 
     //TODO: Candidate for threads
-    for(auto& s : strategies) {
+    std::vector<std::thread> threads;
+    std::mutex mtx;
+
+    auto& docAllocator = doc.GetAllocator();
+
+#ifdef MULTITHREADED_RENDERING
+    for(int i = 0; i < strategies.size(); i++) {
+        const auto& s = strategies[i];
+        threads.push_back(std::thread([&s, &docAllocator, &mtx, &svgDataJV]{
+            auto svg = renderSceneGraph(s);
+
+            rapidjson::Value svgJV;
+            svgJV.SetString(svg, docAllocator );
+
+            //critical section
+            std::lock_guard<std::mutex> lck (mtx);
+            svgDataJV.PushBack(svgJV, docAllocator );
+        }));
+    }
+
+    for(int i = 0; i < threads.size(); i++) {
+        threads[i].join();
+    }
+
+#else
+    for(const auto& s : strategies) {
         auto svg = renderSceneGraph(s);
 
         rapidjson::Value svgJV;
-        svgJV.SetString(svg, doc.GetAllocator());
-        svgDataJV.PushBack(svgJV, doc.GetAllocator());
+        svgJV.SetString(svg, docAllocator );
+
+        svgDataJV.PushBack(svgJV, docAllocator );
     }
+
+#endif
 
     doc.AddMember("svg_data", svgDataJV.Move(), doc.GetAllocator());
 

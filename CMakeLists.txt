@@ -7,8 +7,16 @@ project(markov)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
+find_package (Threads)
+set (markov_LIBS ${CMAKE_THREAD_LIBS_INIT})
+
+
 option(BUILD_AS_MICROSERVICE "Build program as a http standalone server." OFF)
-option(GRAPHVIZ_LINK_LIBRARY "Using graphviz as a library, or throw executing processes" ON)
+option(GRAPHVIZ_LINK_LIBRARY "Using graphviz as the library, or use as a the process" OFF)
+option(MULTITHREADED_GRAPH_RENDERING "Using threads when rendering. This option is highly recommended to turn ON,
+    if you use graphviz as the process instead as the library for rendering." OFF)
+option(VERBOSE_DEBUG_OUTPUT "Enable verbose debug outputs" OFF)
+
 
 set(markov_SRC
     src/markov.cpp
@@ -18,7 +26,6 @@ set(markov_SRC
     src/lib_entry_point.cpp
 )
 
-set (markov_LIBS "")
 
 #if graphviz library is not set, program will be builded with process support
 if(GRAPHVIZ_LINK_LIBRARY)
@@ -31,6 +38,14 @@ else()
 endif()
 
 
+if(VERBOSE_DEBUG_OUTPUT)
+    add_definitions(-DENABLE_DEBUG_OUTPUT=1)
+endif()
+
+if(MULTITHREADED_GRAPH_RENDERING)
+    add_definitions(-DMULTITHREADED_RENDERING=1)
+endif()
+
 if(BUILD_AS_MICROSERVICE)
     find_package(PkgConfig REQUIRED)
     pkg_search_module(LIBMICROHTTPD REQUIRED libmicrohttpd)
@@ -41,14 +56,17 @@ else()
 endif()
 
 
-add_definitions(-DRAPIDJSON_HAS_STDSTRING=1 -DFMT_HEADER_ONLY=1 -std=c++14 -static)
+add_definitions(-DRAPIDJSON_HAS_STDSTRING=1 -DFMT_HEADER_ONLY=1 -std=c++14 -static -pthread)
 
 
 add_executable(${PROJECT_NAME} ${markov_SRC})
 target_link_libraries(${PROJECT_NAME} ${markov_LIBS})
 
-message("# ------------------------------------")
+message("# ---------------------------------------------------------")
 message("# BUILD STATUS")
-message("  BUILD_AS_MICROSERVICE ${BUILD_AS_MICROSERVICE}")
-message("  GRAPHVIZ_LINK_LIBRARY ${GRAPHVIZ_LINK_LIBRARY}")
+message("# ---------------------------------------------------------")
+message("# BUILD_AS_MICROSERVICE \t\t${BUILD_AS_MICROSERVICE}")
+message("# GRAPHVIZ_LINK_LIBRARY \t\t${GRAPHVIZ_LINK_LIBRARY}")
+message("# MULTITHREADED_GRAPH_RENDERING \t${MULTITHREADED_GRAPH_RENDERING}")
+message("# VERBOSE_DEBUG_OUTPUT \t\t${VERBOSE_DEBUG_OUTPUT}")
 message("# ------------------------------------")

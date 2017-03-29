@@ -5,6 +5,7 @@
 #include <thirdparty/rapidjson/writer.h>
 
 #if defined(GRAPHVIZ_DYNAMIC_RENDERING) || defined(GRAPHVIZ_STATIC_RENDERING)
+#include <mutex>
 #include <graphviz/gvc.h>
 #else
 #include "thirdparty/tiny-process-library/process.hpp"
@@ -13,8 +14,16 @@
 namespace utils {
 
 #if defined(GRAPHVIZ_DYNAMIC_RENDERING)
+
+static std::mutex mtx;
+
 std::string renderToGraph(const std::string& graphDesc)
 {
+#ifdef MULTITHREADED_RENDERING
+    //critical section for thread safety
+    std::lock_guard<std::mutex> lck (mtx);
+#endif
+
     GVC_t* gvc = gvContext();
 
     Agraph_t* G = agmemread(graphDesc.c_str());
@@ -53,7 +62,13 @@ std::string renderToGraph(const std::string& graphDesc)
     dot.write(graphDesc);
     dot.close_stdin();
 
-    auto errCode = dot.get_exit_status();
+    auto status = dot.get_exit_status();
+    DEBUG("Dot process exited with code: {}", status);
+
+    //Check that error happens
+    if(status != 0) {
+        return "";
+    }
 
     return result;
 }
