@@ -19,7 +19,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>
 
-#include "markov.h"
+#include "lib_entry_point.h"
 
 
 int main()
@@ -36,9 +36,7 @@ int main()
         res->set_header("Access-Control-Allow-Origin", "*");
         res->set_header("Content-Type", "text/javascript");
 
-        std::ostringstream ss;
-        ss << p.strat_json;
-        std::string outcome_json = doWork(ss.str());
+        std::string outcome_json = analyse(p.strat_json);
         return outcome_json;
     }
 
