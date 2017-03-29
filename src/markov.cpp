@@ -27,7 +27,7 @@ JsonParseResult buildStrategies(rapidjson::Document& doc)
     steps = doc["steps"].GetInt();
 
     if(not ( doc.HasMember("strategies") && doc["strategies"].IsArray()) ) {
-        return Err<EvalError>( {12,"JSON root have not field 'trategies' or this field is not an array"} );
+        return Err<EvalError>( {12,"JSON root have not field 'strategies' or this field is not an array"} );
     }
 
     auto stratArr = doc["strategies"].GetArray();

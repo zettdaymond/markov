@@ -163,7 +163,7 @@ public:
 
     E& err()
     {
-        assert(m_ok && "Trying to unwrap Result type without a value.");
+        assert(!m_ok && "Trying to unwrap Result type without a value.");
         return *reinterpret_cast<E*>(&m_storage);
     }
 
