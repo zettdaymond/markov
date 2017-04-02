@@ -1,7 +1,7 @@
 # Description #
-**Markov** - is a micro-service (or standalone program, depends on build options) that could determine optimal strategy in set of strategies, defined by probabilities and  revenues  matrices. It relies on "reccurent" method described in theory of controllable Markov chains.
+**Markov** - is a micro-service (or console tool, depends on build options) that could determine optimal strategy in set of strategies, defined by probabilities and  revenues  matrices. It relies on "reccurent" method described in theory of controllable Markov chains.
 
-# Dendencies #
+# Dependencies #
 * libmicrohttpd (OPTIONAL) - if you want to build Markov as micro-service.
 * graphviz (OPTIONAL) - for strategy graph visualization
 * cmake 
@@ -19,7 +19,7 @@ Markov may be build in different configurations, depends on ```cmake``` options.
 * **GRAPHVIZ_LINK_LIBRARY**  - Using graphviz as the library, or use as a the process" *OFF*, by default
 * **MULTITHREADED_GRAPH_RENDERING**  - Using threads when rendering. This option is highly recommended to turn ON, if you use graphviz as the process instead as the library for rendering. *OFF*, by default.
 * **VERBOSE_DEBUG_OUTPUT** - Enable verbose debug outputs. *OFF*, by default.
-* **STATIC_BUILD** "Link all possible libraries statically. *OFF*, by default
+* **STATIC_BUILD** - Link all possible libraries statically. *OFF*, by default
 
 
 ## Linux ##
@@ -32,7 +32,7 @@ cd markov
 mkdir build
 cd build
 ```
-Run ```cmake``` with preffered options, throw ```-D*OPTION*=1```. See list of options below. For example:
+Run ```cmake``` with preffered options, throw ```-D*OPTION*=1```. See list of options above. For example:
 ```
 cmake ..
 make
