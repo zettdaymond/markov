@@ -4,16 +4,32 @@
 
 #include <thirdparty/rapidjson/writer.h>
 
+
 #if defined(GRAPHVIZ_DYNAMIC_RENDERING) || defined(GRAPHVIZ_STATIC_RENDERING)
-#include <mutex>
-#include <graphviz/gvc.h>
+#	include <mutex>
+#	include <graphviz/gvc.h>
 #else
-#include "thirdparty/tiny-process-library/process.hpp"
+#	include "thirdparty/tiny-process-library/process.hpp"
 #endif
+
+
+#ifdef GRAPHVIZ_STATIC_RENDERING
+
+extern gvplugin_library_t gvplugin_core_LTX_library;
+extern gvplugin_library_t gvplugin_dot_layout_LTX_library;
+
+lt_symlist_t lt_preloaded_symbols[] = {
+	{ "gvplugin_core_LTX_library", &gvplugin_core_LTX_library},
+	{ "gvplugin_dot_layout_LTX_library", (void*)(&gvplugin_dot_layout_LTX_library) },
+	{ 0, 0 }
+};
+
+#endif
+
 
 namespace utils {
 
-#if defined(GRAPHVIZ_DYNAMIC_RENDERING)
+#if defined(GRAPHVIZ_DYNAMIC_RENDERING) || defined(GRAPHVIZ_STATIC_RENDERING)
 
 static std::mutex mtx;
 
@@ -24,7 +40,11 @@ std::string renderToGraph(const std::string& graphDesc)
     std::lock_guard<std::mutex> lck (mtx);
 #endif
 
-    GVC_t* gvc = gvContext();
+#ifdef GRAPHVIZ_STATIC_RENDERING
+	GVC_t* gvc = gvContextPlugins(lt_preloaded_symbols, 0);
+#else
+	GVC_t* gvc = gvContext();
+#endif
 
     Agraph_t* G = agmemread(graphDesc.c_str());
 
@@ -46,8 +66,6 @@ std::string renderToGraph(const std::string& graphDesc)
 
     return std::string(result, length);
 }
-
-#elif defined(GRAPHVIZ_STATIC_RENDERING)
 
 #else
 
