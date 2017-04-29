@@ -20,17 +20,17 @@ JsonParseResult buildStrategies(rapidjson::Document& doc)
     std::vector<Strategy> strategies;
 
     if( not doc.IsObject()) {
-        return Err<EvalError>( {10,"JSON root is not an object"} );
+        return Err<EvalError>( {1010,"JSON root is not an object"} );
     }
 
     if(not ( doc.HasMember("steps") && doc["steps"].IsInt()) ) {
-        return Err<EvalError>( {11,"JSON root have not field 'steps' or field is not an integer"} );
+        return Err<EvalError>( {1011,"JSON root have not field 'steps' or field is not an integer"} );
     }
 
     steps = doc["steps"].GetInt();
 
     if(not ( doc.HasMember("strategies") && doc["strategies"].IsArray()) ) {
-        return Err<EvalError>( {12,"JSON root have not field 'strategies' or this field is not an array"} );
+        return Err<EvalError>( {1012,"JSON root have not field 'strategies' or this field is not an array"} );
     }
 
     auto stratArr = doc["strategies"].GetArray();
@@ -38,7 +38,7 @@ JsonParseResult buildStrategies(rapidjson::Document& doc)
     for(rapidjson::SizeType i = 0; i < stratArr.Size(); i++) {
 
         if( not stratArr[i].IsObject()) {
-            return Err<EvalError>( {13,"One of 'strategies' array element is not an object"} );
+            return Err<EvalError>( {1013,"One of 'strategies' array element is not an object"} );
         }
 
         const rapidjson::Value& strategyJson = stratArr[i].GetObject();
